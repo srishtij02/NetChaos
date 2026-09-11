@@ -1,0 +1,9 @@
+{
+    "active_connections": 0,
+    "total_connections": 0,
+    "dropped_connections": 0,
+    "timeouts": 0,
+    "connection_errors": 0,
+    "bytes_client_to_server": 5,
+    "bytes_server_to_client": 2048
+}

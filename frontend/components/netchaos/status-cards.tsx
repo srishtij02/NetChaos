@@ -79,7 +79,7 @@ export function StatusCards({
       <StatCard
         icon={Network}
         label="Upstream"
-        address="127.0.0.1:8000"
+        address="127.0.0.1:8001"
         status={online ? 'Connected' : 'Unreachable'}
         tone={online ? 'success' : 'destructive'}
       />

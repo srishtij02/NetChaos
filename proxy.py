@@ -1,14 +1,32 @@
+
 import asyncio
 import json
 from pathlib import Path
 
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
+METRICS_PATH = Path(__file__).parent / "metrics.json"
+
+
+metrics = {
+    "active_connections": 0,
+    "total_connections": 0,
+    "dropped_connections": 0,
+    "timeouts": 0,
+    "connection_errors": 0,
+    "bytes_client_to_server": 0,
+    "bytes_server_to_client": 0,
+}
 
 
 def load_config():
     with open(CONFIG_PATH, "r") as file:
         return json.load(file)
+
+
+def save_metrics():
+    with open(METRICS_PATH, "w") as file:
+        json.dump(metrics, file, indent=4)
 
 
 async def send_with_bandwidth_limit(writer, data, config):
@@ -63,6 +81,13 @@ async def forward_data(
                 f"{direction}: {len(data)} bytes"
             )
 
+            if direction == "CLIENT → SERVER":
+                metrics["bytes_client_to_server"] += len(data)
+            else:
+                metrics["bytes_server_to_client"] += len(data)
+
+            save_metrics()
+
             latency = config["latency_seconds"]
 
             if latency > 0:
@@ -100,13 +125,33 @@ async def handle_client(
         f"Client connected: {client_address}"
     )
 
+    metrics["total_connections"] += 1
+    metrics["active_connections"] += 1
+    save_metrics()
+
     if config["drop_connection"]:
+        metrics["dropped_connections"] += 1
+        metrics["active_connections"] -= 1
+        save_metrics()
+
         print(
             "Dropping connection intentionally."
         )
 
         client_writer.close()
         await client_writer.wait_closed()
+        return
+
+    if config["reset_connection"]:
+        metrics["connection_errors"] += 1
+        metrics["active_connections"] -= 1
+        save_metrics()
+
+        print(
+            "Resetting connection intentionally."
+        )
+
+        client_writer.transport.abort()
         return
 
     try:
@@ -116,6 +161,10 @@ async def handle_client(
         )
 
     except ConnectionRefusedError:
+        metrics["connection_errors"] += 1
+        metrics["active_connections"] -= 1
+        save_metrics()
+
         print(
             "Could not connect to the upstream server."
         )
@@ -170,12 +219,15 @@ async def handle_client(
             result = task.result()
 
             if result == "timeout":
+                metrics["timeouts"] += 1
                 timeout_occurred = True
 
         except Exception:
             pass
 
     if timeout_occurred:
+        save_metrics()
+
         error_message = (
             "ERROR: Connection timed out due to inactivity."
         )
@@ -208,6 +260,9 @@ async def handle_client(
     except Exception:
         pass
 
+    metrics["active_connections"] -= 1
+    save_metrics()
+
     print(
         f"Client disconnected: {client_address}"
     )
@@ -215,6 +270,8 @@ async def handle_client(
 
 async def main():
     config = load_config()
+
+    save_metrics()
 
     async def client_handler(reader, writer):
         await handle_client(
@@ -241,3 +298,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+ 

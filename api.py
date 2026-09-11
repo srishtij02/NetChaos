@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 import json
 from pathlib import Path
 
@@ -19,14 +19,24 @@ app.add_middleware(
 )
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
+METRICS_PATH = Path(__file__).parent / "metrics.json"
 
 
 class ChaosConfig(BaseModel):
-    latency_seconds: float
-    timeout_seconds: float
+    latency_seconds: float = Field(ge=0)
+    timeout_seconds: float = Field(gt=0)
     drop_connection: bool
-    bandwidth_kbps: float
+    reset_connection: bool
+    bandwidth_kbps: float = Field(ge=0)
 
+    @model_validator(mode="after")
+    def validate_chaos_config(self):
+        if self.drop_connection and self.reset_connection:
+            raise ValueError(
+                "drop_connection and reset_connection cannot both be enabled"
+            )
+
+        return self
 
 @app.get("/")
 async def root():
@@ -60,3 +70,9 @@ async def update_config(config: ChaosConfig):
         json.dump(current_config, file, indent=4)
 
     return current_config
+
+
+@app.get("/metrics")
+async def get_metrics():
+    with open(METRICS_PATH, "r") as file:
+        return json.load(file)

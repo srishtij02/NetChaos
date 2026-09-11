@@ -23,7 +23,7 @@ export const API_BASE_URL =
 // facts (not part of the mutable chaos config), so they are described here.
 export const PROXY_INFO = {
   upstreamHost: '127.0.0.1',
-  upstreamPort: 8000,
+  upstreamPort: 8001,
   listenHost: '127.0.0.1',
   listenPort: 9000,
 } as const
@@ -115,4 +115,18 @@ export function updateConfig(config: ChaosConfig) {
     method: 'POST',
     body: JSON.stringify(config),
   })
+}
+/** GET /metrics — live proxy traffic and connection metrics. */
+export interface NetChaosMetrics {
+  active_connections: number
+  total_connections: number
+  dropped_connections: number
+  timeouts: number
+  connection_errors: number
+  bytes_client_to_server: number
+  bytes_server_to_client: number
+}
+
+export function getMetrics() {
+  return request<NetChaosMetrics>('/metrics')
 }

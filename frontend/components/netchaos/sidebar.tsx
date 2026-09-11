@@ -97,7 +97,7 @@ export function Sidebar({
               <p className="text-xs font-medium">
                 {connected ? 'API Connected' : 'API Offline'}
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground">127.0.0.1:8000</p>
+              <p className="font-mono text-[10px] text-muted-foreground">127.0.0.1:8001</p>
             </div>
           </div>
         </div>

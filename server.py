@@ -22,10 +22,10 @@ async def main():
     server = await asyncio.start_server(
         handle_client,
         "127.0.0.1",
-        8000
+        8001
     )
 
-    print("Test server running on port 8000")
+    print("Test server running on port 8001")
 
     async with server:
         await server.serve_forever()
