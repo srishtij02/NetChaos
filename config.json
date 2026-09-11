@@ -3,7 +3,7 @@
     "upstream_port": 8001,
     "listen_host": "127.0.0.1",
     "listen_port": 9000,
-    "latency_seconds": -1.0,
+    "latency_seconds": 1.0,
     "timeout_seconds": 5.0,
     "drop_connection": false,
     "reset_connection": false,
