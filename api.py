@@ -1,10 +1,22 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 from pathlib import Path
 
 
 app = FastAPI(title="NetChaos API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
@@ -47,7 +59,4 @@ async def update_config(config: ChaosConfig):
     with open(CONFIG_PATH, "w") as file:
         json.dump(current_config, file, indent=4)
 
-    return {
-        "status": "updated",
-        "config": current_config
-    }
+    return current_config
